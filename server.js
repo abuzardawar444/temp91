@@ -2,26 +2,26 @@ import "express-async-errors";
 import * as dotenv from "dotenv";
 dotenv.config();
 import express from "express";
-const app = express();
+import cloudinary from "cloudinary";
+import helmet from "helmet";
+import mongSanitize from "express-mongo-sanitize";
+
+//Show log for request type and status
 import morgan from "morgan";
 import mongoose from "mongoose";
 import cookieParser from "cookie-parser";
-import cloudinary from "cloudinary";
-import helmet from "helmet";
-import mongoSanitize from "express-mongo-sanitize";
 
-// routers
 import jobRouter from "./routes/jobRouter.js";
 import authRouter from "./routes/authRouter.js";
 import userRouter from "./routes/userRouter.js";
-// public
+
+import errorHandlerMiddleware from "./middleware/errorHandlerMiddleware.js";
+import { authenticateUser } from "./middleware/authMiddleware.js";
 import { dirname } from "path";
 import { fileURLToPath } from "url";
 import path from "path";
 
-// middleware
-import errorHandlerMiddleware from "./middleware/errorHandlerMiddleware.js";
-import { authenticateUser } from "./middleware/authMiddleware.js";
+const app = express();
 
 cloudinary.config({
   cloud_name: process.env.CLOUD_NAME,
@@ -30,22 +30,18 @@ cloudinary.config({
 });
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
+app.use(express.static(path.resolve(__dirname, "./client/dist")));
+
 if (process.env.NODE_ENV === "development") {
   app.use(morgan("dev"));
 }
-app.use(express.static(path.resolve(__dirname, "./client/dist")));
+
 app.use(cookieParser());
 app.use(express.json());
 app.use(helmet());
-app.use(mongoSanitize());
+app.use(mongSanitize());
 
-app.get("/", (req, res) => {
-  res.send("Hello World");
-});
-
-app.get("/api/v1/test", (req, res) => {
-  res.json({ msg: "test route" });
-});
+const port = process.env.PORT || 5100;
 
 app.use("/api/v1/jobs", authenticateUser, jobRouter);
 app.use("/api/v1/users", authenticateUser, userRouter);
@@ -56,17 +52,16 @@ app.get("*", (req, res) => {
 });
 
 app.use("*", (req, res) => {
-  res.status(404).json({ msg: "not found" });
+  res.status(404).json({ message: "Page not found" });
 });
-
+// Should be last one
 app.use(errorHandlerMiddleware);
-
-const port = process.env.PORT || 5100;
 
 try {
   await mongoose.connect(process.env.MONGO_URL);
+  // Listen to server
   app.listen(port, () => {
-    console.log(`server running on PORT ${port}...`);
+    console.log(`Server is running on port ${port}`);
   });
 } catch (error) {
   console.log(error);
