@@ -19,10 +19,10 @@
     "react-router-dom": "^6.10.0",
     "react-toastify": "^9.1.2",
     "recharts": "^2.5.0",
+    "@tanstack/react-query-devtools": "^4.29.6",
     "styled-components": "^5.3.10"
   },
   "devDependencies": {
-    "@tanstack/react-query-devtools": "^4.29.6",
     "@types/react": "^18.0.37",
     "@types/react-dom": "^18.0.11",
     "@vitejs/plugin-react": "^4.0.0",
